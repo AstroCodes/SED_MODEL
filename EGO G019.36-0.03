@@ -1,0 +1,130 @@
+clc
+close all
+clear all
+tic
+
+v=1e10:1e12:1e17;   %frequency
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Source Function SvDust=BvDust.*QvDust.*OmeDust
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%MODEL FOR DUST
+%CTTE's
+h = 6.626e-34;   	% Planck's Constant = 4.135 x 10^-15 eV s
+c = 3e8;  		% speed of light (MKS)
+k= 1.38066e-23; 	% Boltzmann constant in J/K
+
+%Values for Dust (OmeDust)
+TDust=38; %38 K
+VoDust=1e13; %10 THz
+AU=1.496e11; %1 AU on meters
+OmeDust=5e6.*AU; %Meters
+
+%Values for Dust (QvDust)
+betha=1.5; %Betha value
+tao=1; %Tao constant
+
+C1=(v./VoDust); %Ctte 1
+C2=(C1).^betha; %Ctte 2
+C3=exp((-tao).*(C2)); %Ctte 3
+QvDust=1-C3; %Qv Value
+
+%Values for Dust (BvDust)
+A=2.*h.*(v.^3)./(c.^2);
+B=exp((h.*v)/(k.*TDust));
+BvDust=A.*((1)./(B - 1)); %Bv Value
+
+%Sv Dust
+SvDust=BvDust.*QvDust.*OmeDust;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%Source Function SvSource=BvSource.*QvSource.*OmeSource%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Values for Source (OmeSource)
+TSource=1.8e4; %18,000 K
+VoSource=4.5e13; %45 THz
+rsol=6.955e5; %Km
+OmeSource=85.*rsol; 
+
+%Values for Source (QvSource)
+betha=1.5; %Betha value
+tao=1; %Tao constant
+
+CS=(VoSource./VoSource); %Ctte 1
+CSS=(CS).^betha; %Ctte 2
+CSSS=exp((-tao).*(CSS)); %Ctte 3
+QvSource=1-CSSS; %Qv Value
+
+%%Alternative value HIGH EXTINTION%% 
+Ca1=(v./VoSource); %Ctte 1
+Ca2=(Ca1).^betha; %Ctte 2
+Ca3=exp((-tao).*(Ca2)); %Ctte 3
+QvSourcea=Ca3; %QvSourcea Value HIGH EXTINTION
+
+%Values for Source (BvSource)
+AS=2.*h.*(v.^3)./(c.^2);
+BS=exp((h.*v)/(k.*TSource));
+BvSource=AS.*((1)./(BS - 1)); %BvSource Value
+
+%Sv Source
+SvSourcea=BvSource.*QvSourcea.*OmeSource;
+SvSource=BvSource.*OmeSource;
+
+%SUM SV
+SvTotal=SvDust+SvSourcea;
+
+%PLOT 
+figure 
+loglog(v, SvSourcea,'.--red', v, SvDust, '.--blue', v,SvTotal,'-black', v, SvSource,':black');
+p(3).LineWidth = 4;
+% loglog(v, SvSourcea,'.--k');
+
+title('EGO G019.36-0.03, Outflow candidate ');
+xlabel('Frequency [Hz]')
+ylabel('Sv[Jy]');
+grid on
+legend('Sv_{Source}; T = 18,000 K (W-high extintion)', 'Sv_{env}; T= 38 K', 'F_v(t_v) =Sv_{Source} + Sv_{env}','Sv_{BlackBody}')%%
+
+axis([1.8e11 1e16 1e-4 1e4])
+hold on
+
+%SED DATA
+A=importdata('SEDatac.txt');
+SEDy=A(:,1);
+SEDx=A(:,2);
+loglog(SEDx, SEDy,'s',...
+    'LineWidth',1,...
+    'MarkerSize',14,...
+    'MarkerEdgeColor','k')
+hold on
+
+B=importdata('SEDatab.txt');
+SEDy1=B(:,1);
+SEDx1=B(:,2);
+loglog(SEDx1, SEDy1,'s',...
+    'LineWidth',1,...
+    'MarkerSize',14,...
+    'MarkerEdgeColor','blue')
+hold on
+
+C=importdata('SEData.txt');
+SEDy2=C(:,1);
+SEDx2=C(:,2);
+loglog(SEDx2, SEDy2,'s',...
+    'LineWidth',1,...
+    'MarkerSize',14,...
+    'MarkerEdgeColor','red')
+
+open('SEDatac.txt')
+open('SEDatab.txt')
+open('SEData.txt')
+grid on
+hold off
+toc
+
+
+
+
+
